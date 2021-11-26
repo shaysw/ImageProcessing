@@ -55,7 +55,7 @@ def perform_ocr():
         log('No file part')
         return 'No selected file'
     file = request.files['file']
-    log(file)
+    log(file.filename)
     uploaded_file_path = upload_file(file)
     text_fom_file = perform_ocr_on_file(uploaded_file_path)
     return text_fom_file
