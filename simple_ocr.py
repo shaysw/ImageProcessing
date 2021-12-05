@@ -1,3 +1,6 @@
+APP_NAME = "SimpleOCR"
+APP_ID = 117
+
 try:
     from PIL import Image
 except ImportError:

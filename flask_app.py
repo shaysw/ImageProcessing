@@ -4,12 +4,12 @@ from flask import Flask, request, flash
 from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
-from simple_ocr import perform_ocr_on_file
+
+import digit_recognition
+import simple_ocr
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 EVENT_LOG_URL = "http://127.0.0.1:8000/EventServer/audit_log/post_event"
-APP_NAME = "SimpleOCR"
-APP_ID = 117
 UPLOAD_FOLDER = Path(os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads"))
 
 app = Flask(__name__)
@@ -18,11 +18,11 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-def log(message):
+def log(app_name, app_id, message):
     payload = {
         "event_type": "LOG",
-        "application_id": APP_ID,
-        "sender": APP_NAME,
+        "application_id": app_id,
+        "sender": app_name,
         "value": message
     }
     headers = {
@@ -39,10 +39,22 @@ def perform_ocr():
         log('No file part')
         return 'No selected file'
     file = request.files['file']
-    log(file.filename)
+    log(simple_ocr.APP_NAME, simple_ocr.APP_ID, file.filename)
     uploaded_file_path = upload_file(file)
-    text_fom_file = perform_ocr_on_file(uploaded_file_path)
+    text_fom_file = simple_ocr.perform_ocr_on_file(uploaded_file_path)
     return text_fom_file
+
+
+@app.route("/PerformDigitRecognition", methods=['POST'])
+def perform_digit_recognition():
+    if 'file' not in request.files:
+        log('No file part')
+        return 'No selected file'
+    file = request.files['file']
+    uploaded_file_path = upload_file(file)
+    digits_fom_file = digit_recognition.perform_digit_recognition(uploaded_file_path)
+    log(digit_recognition.APP_NAME, digit_recognition.APP_ID, uploaded_file_path)
+    return digits_fom_file
 
 
 def upload_file(file):
