@@ -41,8 +41,8 @@ def perform_ocr():
     file = request.files['file']
     log(simple_ocr.APP_NAME, simple_ocr.APP_ID, file.filename)
     uploaded_file_path = upload_file(file)
-    text_fom_file = simple_ocr.perform_ocr_on_file(uploaded_file_path)
-    return text_fom_file
+    text_from_file = simple_ocr.perform_ocr_on_file(uploaded_file_path)
+    return text_from_file
 
 
 @app.route("/PerformDigitRecognition", methods=['POST'])
@@ -52,9 +52,9 @@ def perform_digit_recognition():
         return 'No selected file'
     file = request.files['file']
     uploaded_file_path = upload_file(file)
-    digits_fom_file = digit_recognition.perform_digit_recognition(uploaded_file_path)
+    digits_from_file = digit_recognition.perform_digit_recognition(uploaded_file_path)
     log(digit_recognition.APP_NAME, digit_recognition.APP_ID, uploaded_file_path)
-    return digits_fom_file
+    return digits_from_file
 
 
 def upload_file(file):

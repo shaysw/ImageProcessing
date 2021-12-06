@@ -102,7 +102,7 @@ def perform_digit_recognition(image_path):
         cv2.putText(im, str(int(nbr[0])), (rect[0], rect[1]), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
 
     cv2.imwrite('output.png', im)
-    return recognized_digits
+    return str(recognized_digits)
 
 
 if __name__ == "__main__":
