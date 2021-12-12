@@ -109,8 +109,8 @@ def perform_digit_recognition(image_path):
             center_x = x + int(w / 2)
             center_y = y + int(h / 2)
             length = max(w, h)
-            if length > 130:
-                length = length * 2
+            if length > 110:
+                length = length * 1.97
             else:
                 length = length * 1.5
             # TODO: add empty pixels if out of bounds
@@ -143,6 +143,8 @@ def upload_base64(base64_string):
 
 
 if __name__ == "__main__":
-    print(perform_digit_recognition("1 2 3.png"))
-    print(perform_digit_recognition("imageToSave.png"))
-    print(perform_digit_recognition("digit_recognition_image.png"))
+    # print(perform_digit_recognition(r"C:\Users\Shaysw\Documents\6_0.png"))
+    print(perform_digit_recognition(r"C:\Users\Shaysw\Desktop\7.png"))
+    # print(perform_digit_recognition("1 2 3.png"))
+    # print(perform_digit_recognition("imageToSave.png"))
+    # print(perform_digit_recognition(r"C:\Users\Shaysw\Documents\digit_recognition_image.png"))
