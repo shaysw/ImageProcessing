@@ -102,28 +102,37 @@ def perform_digit_recognition(image_path):
 
     # For each rectangular region, calculate HOG features and predict the digit using Linear SVM.
     for i, rect in enumerate(rectangles):
-        # Draw the rectangles
-        x, y, w, h = rect[0], rect[1], rect[2], rect[3]
-        cv2.rectangle(im, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (0, 255, 0), 3)
-        center_x = x + int(w / 2)
-        center_y = y + int(h / 2)
-        length = max(w, h) * 1.4
-        start_x = center_x - int(length / 2)
-        finish_x = center_x + int(length / 2)
-        start_y = center_y - int(length / 2)
-        finish_y = center_y + int(length / 2)
-        roi = image_threshold[start_y:finish_y, start_x:finish_x]
-        roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
-        roi = cv2.dilate(roi, (3, 3))
-        _, roi = cv2.threshold(roi, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-        cv2.imwrite(f'roi_{i}.png', roi)
-        roi = roi.reshape(1, -1)
+        try:
+            # Draw the rectangles
+            x, y, w, h = rect[0], rect[1], rect[2], rect[3]
+            cv2.rectangle(im, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (0, 255, 0), 3)
+            center_x = x + int(w / 2)
+            center_y = y + int(h / 2)
+            length = max(w, h)
+            if length > 130:
+                length = length * 2
+            else:
+                length = length * 1.5
+            # TODO: add empty pixels if out of bounds
+            start_x = max(0, center_x - int(length / 2))
+            finish_x = min(center_x + int(length / 2), len(image_threshold[0]))
+            start_y = max(0, center_y - int(length / 2))
+            finish_y = min(center_y + int(length / 2), len(image_threshold))
+            roi = image_threshold[start_y:finish_y, start_x:finish_x]
+            roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+            roi = cv2.dilate(roi, (3, 3))
+            # _, roi = cv2.threshold(roi, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+            cv2.imwrite(f'roi_{i}.png', roi)
+            roi = roi.reshape(1, -1)
 
-        nbr = classifier.predict(roi)
-        recognized_digits.append(int(nbr[0]))
-        cv2.putText(im, str(int(nbr[0])), (rect[0], rect[1]), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
+            nbr = classifier.predict(roi)
+            recognized_digits.append(int(nbr[0]))
+            cv2.putText(im, str(int(nbr[0])), (rect[0], rect[1]), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
 
-    cv2.imwrite('output.png', im)
+        except Exception as e:
+            recognized_digits.append(e)
+
+    cv2.imwrite('test.png', im)
     return str(recognized_digits)
 
 
@@ -135,3 +144,5 @@ def upload_base64(base64_string):
 
 if __name__ == "__main__":
     print(perform_digit_recognition("1 2 3.png"))
+    print(perform_digit_recognition("imageToSave.png"))
+    print(perform_digit_recognition("digit_recognition_image.png"))
