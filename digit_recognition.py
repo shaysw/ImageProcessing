@@ -1,4 +1,3 @@
-import base64
 import time
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -12,7 +11,8 @@ APP_NAME = "DigitRecognition"
 APP_ID = 118
 CLASSIFIER_FILE_PATH = "clf_4.p"
 MNIST784_ZIP_FILE_PATH = "mnist_784.zip"
-
+DIGIT_RECOGNITION_INPUT_IMAGE_AS_BASE64_FILE_NAME = "digit_recognition_input_image.png"
+DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME = "digit_recognition_output_image.png"
 
 def load_mnist():
     print('Loading mnist784.zip...')
@@ -121,7 +121,6 @@ def perform_digit_recognition(image_path):
             roi = image_threshold[start_y:finish_y, start_x:finish_x]
             roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
             roi = cv2.dilate(roi, (3, 3))
-            # _, roi = cv2.threshold(roi, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
             cv2.imwrite(f'roi_{i}.png', roi)
             roi = roi.reshape(1, -1)
 
@@ -132,19 +131,6 @@ def perform_digit_recognition(image_path):
         except Exception as e:
             recognized_digits.append(e)
 
-    cv2.imwrite('test.png', im)
+    cv2.imwrite(DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME, im)
     return str(recognized_digits)
 
-
-def upload_base64(base64_string):
-    with open("imageToSave.png", "wb") as fh:
-        a = base64.b64decode(base64_string)
-        fh.write(a)
-
-
-if __name__ == "__main__":
-    # print(perform_digit_recognition(r"C:\Users\Shaysw\Documents\6_0.png"))
-    print(perform_digit_recognition(r"C:\Users\Shaysw\Desktop\7.png"))
-    # print(perform_digit_recognition("1 2 3.png"))
-    # print(perform_digit_recognition("imageToSave.png"))
-    # print(perform_digit_recognition(r"C:\Users\Shaysw\Documents\digit_recognition_image.png"))
