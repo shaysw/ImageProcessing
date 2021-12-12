@@ -1,8 +1,6 @@
-import base64
 import json
 import requests
 from flask import Flask, request, flash
-from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
@@ -18,7 +16,6 @@ app = Flask(__name__)
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
