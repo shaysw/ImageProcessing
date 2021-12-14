@@ -51,13 +51,14 @@ def perform_digit_recognition():
     uploaded_file_path = upload_base64(request.data)
     digits_from_file = digit_recognition.perform_digit_recognition(uploaded_file_path)
     log(digit_recognition.APP_NAME, digit_recognition.APP_ID, digits_from_file)
-    output_file_as_bytes = b''.send_file(digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME)\
-        .response.file.readlines()
+    output_file_as_bytes = b''.join(send_file(digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME) \
+                                    .response.file.readlines())
     return base64.b64encode(output_file_as_bytes)
 
 
 def upload_base64(base64_string):
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], digit_recognition.DIGIT_RECOGNITION_INPUT_IMAGE_AS_BASE64_FILE_NAME)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                             digit_recognition.DIGIT_RECOGNITION_INPUT_IMAGE_AS_BASE64_FILE_NAME)
     with open(file_path, "wb") as f:
         f.write(base64_string)
 
