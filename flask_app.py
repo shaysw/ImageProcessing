@@ -1,3 +1,4 @@
+import base64
 import json
 import requests
 from flask import Flask, request, flash, send_file
@@ -50,7 +51,9 @@ def perform_digit_recognition():
     uploaded_file_path = upload_base64(request.data)
     digits_from_file = digit_recognition.perform_digit_recognition(uploaded_file_path)
     log(digit_recognition.APP_NAME, digit_recognition.APP_ID, digits_from_file)
-    return send_file(digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME)
+    output_file_as_bytes = b''.send_file(digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME)\
+        .response.file.readlines()
+    return base64.b64encode(output_file_as_bytes)
 
 
 def upload_base64(base64_string):
