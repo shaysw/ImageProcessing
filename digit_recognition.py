@@ -7,6 +7,8 @@ from sklearn import metrics
 import os
 import cv2
 
+
+RECTANGLE_MARGIN = 50
 APP_NAME = "DigitRecognition"
 APP_ID = 118
 CLASSIFIER_FILE_PATH = "clf_4.p"
@@ -106,18 +108,12 @@ def perform_digit_recognition(image_path):
             # Draw the rectangles
             x, y, w, h = rect[0], rect[1], rect[2], rect[3]
             cv2.rectangle(im, (rect[0], rect[1]), (rect[0] + rect[2], rect[1] + rect[3]), (0, 255, 0), 3)
-            center_x = x + int(w / 2)
-            center_y = y + int(h / 2)
-            length = max(w, h)
-            if length > 110:
-                length = length * 1.97
-            else:
-                length = length * 1.5
+
             # TODO: add empty pixels if out of bounds
-            start_x = max(0, center_x - int(length / 2))
-            finish_x = min(center_x + int(length / 2), len(image_threshold[0]))
-            start_y = max(0, center_y - int(length / 2))
-            finish_y = min(center_y + int(length / 2), len(image_threshold))
+            start_x = max(0, x - RECTANGLE_MARGIN)
+            finish_x = min(x + w + RECTANGLE_MARGIN, len(image_threshold[0]))
+            start_y = max(0, y - RECTANGLE_MARGIN)
+            finish_y = min(y + h + RECTANGLE_MARGIN, len(image_threshold))
             roi = image_threshold[start_y:finish_y, start_x:finish_x]
             roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
             roi = cv2.dilate(roi, (3, 3))
@@ -133,4 +129,3 @@ def perform_digit_recognition(image_path):
 
     cv2.imwrite(DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME, im)
     return str(recognized_digits)
-
