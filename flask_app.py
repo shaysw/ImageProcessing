@@ -20,18 +20,22 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 def log(app_name, app_id, message):
-    payload = {
-        "event_type": "LOG",
-        "application_id": app_id,
-        "sender": app_name,
-        "value": message
-    }
-    headers = {
-        'Content-Type': 'application/json',
-    }
+    try:
+        payload = {
+            "event_type": "LOG",
+            "application_id": app_id,
+            "sender": app_name,
+            "value": message
+        }
+        headers = {
+            'Content-Type': 'application/json',
+        }
 
-    response = requests.request("POST", EVENT_LOG_URL, headers=headers, data=json.dumps(payload))
-    print(response.text)
+        response = requests.request("POST", EVENT_LOG_URL, headers=headers, data=json.dumps(payload))
+        print(response.text)
+    except Exception as exception:
+        print(f"Error logging to event server : {exception}")
+
 
 
 @app.route("/PerformOcr", methods=['POST'])
