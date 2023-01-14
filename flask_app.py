@@ -10,7 +10,7 @@ import digit_recognition
 import simple_ocr
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-EVENT_LOG_URL = "http://127.0.0.1:8000/EventServer/audit_log/post_event"
+EVENT_LOG_URL = "https://shayschwartzburd.com/EventServer/audit_log/post_event"
 UPLOAD_FOLDER = Path(os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads"))
 app = Flask(__name__)
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
@@ -77,8 +77,7 @@ def upload_file(file):
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 app.run(port=3000)
