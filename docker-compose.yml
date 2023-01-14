@@ -1,6 +1,6 @@
 version: "3"
 services:
-  shalman:
+  image-processing:
     image: shaysw/my-site:image-processing
     ports:
       - "3000:3000"
