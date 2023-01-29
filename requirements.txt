@@ -7,3 +7,4 @@ scikit-learn==1.0.1
 scipy==1.7.3
 Flask==2.2.2
 pytesseract==0.3.8
+imageio==2.25.0
