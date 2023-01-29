@@ -40,21 +40,21 @@ def log(app_name, app_id, message):
 
 
 @app.post("/PerformGifConversion")
-def perform_gif_conversion(originalVideoFile: UploadFile):
-    uploaded_file_path = upload_file(originalVideoFile)
+def perform_gif_conversion(file: UploadFile):
+    uploaded_file_path = upload_file(file)
     gif_bytes_io = gif_creator.create_gif(uploaded_file_path)
 
-    log(gif_creator.APP_NAME, gif_creator.APP_ID, originalVideoFile.filename)
+    log(gif_creator.APP_NAME, gif_creator.APP_ID, file.filename)
     return StreamingResponse(gif_bytes_io, media_type="image/gif",
-                             headers={'Content-Disposition': f'attachment; filename="{originalVideoFile.filename}"'})
+                             headers={'Content-Disposition': f'attachment; filename="{file.filename}"'})
 
 
 @app.post("/PerformOcr")
-def perform_ocr(ocrImageFile: UploadFile):
-    uploaded_file_path = upload_file(ocrImageFile)
+def perform_ocr(file: UploadFile):
+    uploaded_file_path = upload_file(file)
     text_from_file = simple_ocr.perform_ocr_on_file(uploaded_file_path)
     
-    log(simple_ocr.APP_NAME, simple_ocr.APP_ID, ocrImageFile.filename)
+    log(simple_ocr.APP_NAME, simple_ocr.APP_ID, file.filename)
     return text_from_file
 
 
