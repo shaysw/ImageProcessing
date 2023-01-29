@@ -1,14 +1,8 @@
-import uvicorn
-import base64
-import json
-import requests
-import os
-import gif_creator, digit_recognition, simple_ocr
-# from flask import Flask, request, send_file
+import uvicorn, base64, json, requests, os, gif_creator, digit_recognition, simple_ocr
+
 from fastapi import FastAPI, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-
 from werkzeug.utils import secure_filename
 from pathlib import Path
 
@@ -20,8 +14,7 @@ UPLOAD_FOLDER = Path(os.path.join(
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=[
-                   "*"],  allow_credentials=True, allow_methods=["*"], allow_headers=["*"], )
+app.add_middleware(CORSMiddleware, allow_origins=["*"],  allow_credentials=True, allow_methods=["*"], allow_headers=["*"], )
 
 config = {}
 config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -40,28 +33,28 @@ def log(app_name, app_id, message):
             'Content-Type': 'application/json',
         }
 
-        response = requests.request(
-            "POST", EVENT_LOG_URL, headers=headers, data=json.dumps(payload))
+        response = requests.request("POST", EVENT_LOG_URL, headers=headers, data=json.dumps(payload))
         print(response.text)
     except Exception as exception:
         print(f"Error logging to event server : {exception}")
 
 
 @app.post("/PerformGifConversion")
-def perform_gif_conversion(file: UploadFile):
-    log(gif_creator.APP_NAME, gif_creator.APP_ID, file.filename)
-    uploaded_file_path = upload_file(file)
+def perform_gif_conversion(originalVideoFile: UploadFile):
+    uploaded_file_path = upload_file(originalVideoFile)
     gif_bytes_io = gif_creator.create_gif(uploaded_file_path)
 
+    log(gif_creator.APP_NAME, gif_creator.APP_ID, originalVideoFile.filename)
     return StreamingResponse(gif_bytes_io, media_type="image/gif",
-                             headers={'Content-Disposition': f'attachment; filename="{file.filename}"'})
+                             headers={'Content-Disposition': f'attachment; filename="{originalVideoFile.filename}"'})
 
 
 @app.post("/PerformOcr")
-def perform_ocr(file: UploadFile):
-    log(simple_ocr.APP_NAME, simple_ocr.APP_ID, file.filename)
-    uploaded_file_path = upload_file(file)
+def perform_ocr(ocrImageFile: UploadFile):
+    uploaded_file_path = upload_file(ocrImageFile)
     text_from_file = simple_ocr.perform_ocr_on_file(uploaded_file_path)
+    
+    log(simple_ocr.APP_NAME, simple_ocr.APP_ID, ocrImageFile.filename)
     return text_from_file
 
 
@@ -71,9 +64,9 @@ async def perform_digit_recognition(request: Request):
     uploaded_file_path = upload_base64(body)
     digits_from_file = digit_recognition.perform_digit_recognition(
         uploaded_file_path)
+    output_image_png_file = open(digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME, 'rb').read()
+    
     log(digit_recognition.APP_NAME, digit_recognition.APP_ID, digits_from_file)
-    output_image_png_file = open(
-        digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME, 'rb').read()
     return base64.b64encode(output_image_png_file)
 
 
