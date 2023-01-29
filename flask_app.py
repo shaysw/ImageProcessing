@@ -1,20 +1,31 @@
+import uvicorn
 import base64
 import json
-import requests, os, digit_recognition, simple_ocr, gif_creator
+import requests
+import os
+import gif_creator, digit_recognition, simple_ocr
+# from flask import Flask, request, send_file
+from fastapi import FastAPI, UploadFile, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
-from flask import Flask, request, send_file
 from werkzeug.utils import secure_filename
 from pathlib import Path
 
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4'}
 EVENT_LOG_URL = "https://shayschwartzburd.com/EventServer/audit_log/post_event"
-UPLOAD_FOLDER = Path(os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads"))
-app = Flask(__name__)
+UPLOAD_FOLDER = Path(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "uploads"))
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['CORS_HEADERS'] = 'Content-Type'
+
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=[
+                   "*"],  allow_credentials=True, allow_methods=["*"], allow_headers=["*"], )
+
+config = {}
+config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+config['CORS_HEADERS'] = 'Content-Type'
 
 
 def log(app_name, app_id, message):
@@ -29,55 +40,45 @@ def log(app_name, app_id, message):
             'Content-Type': 'application/json',
         }
 
-        response = requests.request("POST", EVENT_LOG_URL, headers=headers, data=json.dumps(payload))
+        response = requests.request(
+            "POST", EVENT_LOG_URL, headers=headers, data=json.dumps(payload))
         print(response.text)
     except Exception as exception:
         print(f"Error logging to event server : {exception}")
 
 
-
-@app.route("/PerformGifConversion", methods=['POST'])
-def perform_gif_conversion():
-    if 'file' not in request.files:
-        log(gif_creator.APP_NAME, gif_creator.APP_ID, 'No file part')
-        return 'No selected file'
-    file = request.files['file']
+@app.post("/PerformGifConversion")
+def perform_gif_conversion(file: UploadFile):
     log(gif_creator.APP_NAME, gif_creator.APP_ID, file.filename)
     uploaded_file_path = upload_file(file)
     gif_bytes_io = gif_creator.create_gif(uploaded_file_path)
-    
-    return send_file(
-        gif_bytes_io,
-        as_attachment=True,
-        download_name='output.gif',
-        mimetype='image/gif'
-    )
+
+    return StreamingResponse(gif_bytes_io, media_type="image/gif",
+                             headers={'Content-Disposition': f'attachment; filename="{file.filename}"'})
 
 
-@app.route("/PerformOcr", methods=['POST'])
-def perform_ocr():
-    if 'file' not in request.files:
-        log(simple_ocr.APP_NAME, simple_ocr.APP_ID, 'No file part')
-        return 'No selected file'
-    file = request.files['file']
+@app.post("/PerformOcr")
+def perform_ocr(file: UploadFile):
     log(simple_ocr.APP_NAME, simple_ocr.APP_ID, file.filename)
     uploaded_file_path = upload_file(file)
     text_from_file = simple_ocr.perform_ocr_on_file(uploaded_file_path)
     return text_from_file
 
 
-@app.route("/PerformDigitRecognition", methods=['POST'])
-def perform_digit_recognition():
-    uploaded_file_path = upload_base64(request.data)
-    digits_from_file = digit_recognition.perform_digit_recognition(uploaded_file_path)
+@app.post("/PerformDigitRecognition")
+async def perform_digit_recognition(request: Request):
+    body = await request.body()
+    uploaded_file_path = upload_base64(body)
+    digits_from_file = digit_recognition.perform_digit_recognition(
+        uploaded_file_path)
     log(digit_recognition.APP_NAME, digit_recognition.APP_ID, digits_from_file)
-    output_file_as_bytes = b''.join(send_file(digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME) \
-                                    .response.file.readlines())
-    return base64.b64encode(output_file_as_bytes)
+    output_image_png_file = open(
+        digit_recognition.DIGIT_RECOGNITION_OUTPUT_IMAGE_AS_PNG_FILE_NAME, 'rb').read()
+    return base64.b64encode(output_image_png_file)
 
 
 def upload_base64(base64_string):
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+    file_path = os.path.join(config['UPLOAD_FOLDER'],
                              digit_recognition.DIGIT_RECOGNITION_INPUT_IMAGE_AS_BASE64_FILE_NAME)
     with open(file_path, "wb") as f:
         f.write(base64_string)
@@ -90,12 +91,15 @@ def upload_file(file):
         return 'No selected file'
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+        file_path = os.path.join(config['UPLOAD_FOLDER'], filename)
+        with open(file_path, 'wb+') as f:
+            file.file.seek(0)
+            f.write(file.file.read())
         return file_path
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-app.run(host='0.0.0.0', port=3000)
+
+uvicorn.run(app, host="0.0.0.0", port=3000)
