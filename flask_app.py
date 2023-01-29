@@ -1,15 +1,13 @@
 import base64
 import json
-import requests
-from flask import Flask, request, flash, send_file
+import requests, os, digit_recognition, simple_ocr, gif_creator
+
+from flask import Flask, request, send_file
 from werkzeug.utils import secure_filename
-import os
 from pathlib import Path
 
-import digit_recognition
-import simple_ocr
 
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4'}
 EVENT_LOG_URL = "https://shayschwartzburd.com/EventServer/audit_log/post_event"
 UPLOAD_FOLDER = Path(os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads"))
 app = Flask(__name__)
@@ -38,10 +36,28 @@ def log(app_name, app_id, message):
 
 
 
+@app.route("/PerformGifConversion", methods=['POST'])
+def perform_gif_conversion():
+    if 'file' not in request.files:
+        log(gif_creator.APP_NAME, gif_creator.APP_ID, 'No file part')
+        return 'No selected file'
+    file = request.files['file']
+    log(gif_creator.APP_NAME, gif_creator.APP_ID, file.filename)
+    uploaded_file_path = upload_file(file)
+    gif_bytes_io = gif_creator.create_gif(uploaded_file_path)
+    
+    return send_file(
+        gif_bytes_io,
+        as_attachment=True,
+        download_name='output.gif',
+        mimetype='image/gif'
+    )
+
+
 @app.route("/PerformOcr", methods=['POST'])
 def perform_ocr():
     if 'file' not in request.files:
-        log('No file part')
+        log(simple_ocr.APP_NAME, simple_ocr.APP_ID, 'No file part')
         return 'No selected file'
     file = request.files['file']
     log(simple_ocr.APP_NAME, simple_ocr.APP_ID, file.filename)
@@ -71,7 +87,6 @@ def upload_base64(base64_string):
 
 def upload_file(file):
     if file.filename == '':
-        flash('No selected file')
         return 'No selected file'
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
